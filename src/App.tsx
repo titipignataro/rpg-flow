@@ -8,8 +8,7 @@ import { getCognitiveStyle, getContradictions, getMotivators, getStressProfile, 
 import RadarChart from "./components/radarchart";
 import { clearSaved, downloadResult, formatDate, loadSaved, parseImport, persistResult } from "./utils";
 
-const STORAGE_KEY = "psyche_saved_result";
-const EXPORT_VERSION = 2;
+
 
 export default function App() {
   const [screen, setScreen] = useState("intro");

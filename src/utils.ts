@@ -1,3 +1,5 @@
+const STORAGE_KEY = "psyche_saved_result";
+const EXPORT_VERSION = 2;
 
 export function isSavedResult(x) {
   if (!x || typeof x !== "object") return false;
