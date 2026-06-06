@@ -1,4 +1,6 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Mono:wght@400;500&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
 
 /* ═══════════════════════════════════════════════════════════════════════════════
    DESIGN TOKENS
@@ -711,7 +713,6 @@ body {
 }
 
 .result-header {
-  text-align: center;
   margin-bottom: var(--space-2xl);
   padding-bottom: var(--space-2xl);
   border-bottom: 1px solid var(--border-subtle);
@@ -719,17 +720,7 @@ body {
   position: relative;
 }
 
-.result-header::before {
-  content: '';
-  position: absolute;
-  top: var(--space-xl);
-  left: 50%;
-  transform: translateX(-50%);
-  width: 80px;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, var(--color-accent-primary), transparent);
-  border-radius: var(--radius-full);
-}
+
 
 .result-eyebrow {
   font-family: 'DM Mono', monospace;
@@ -741,21 +732,11 @@ body {
   font-weight: 500;
 }
 
-/* Profile Display */
-.profile-display {
-  margin: var(--space-xl) 0 var(--space-lg);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xl);
-  align-items: center;
-}
+
 
 .primary-profile {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: var(--space-md);
-  animation: slideInDown 0.6s ease both;
 }
 
 @keyframes slideInDown {
@@ -772,12 +753,9 @@ body {
 .primary-profile-badge {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-sm);
-  padding: 0.6rem 1.5rem;
-  border-radius: var(--radius-full);
-  border: 1px solid;
-  backdrop-filter: blur(12px);
-  animation: pulseGlow 3s ease-in-out infinite;
+  padding: 0px 1.5rem;
 }
 
 @keyframes pulseGlow {
@@ -809,16 +787,9 @@ body {
   letter-spacing: 0.22em;
   text-transform: uppercase;
   font-weight: 500;
+  color: #6B7280;
 }
 
-.secondary-profile {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-sm);
-  animation: slideInUp 0.6s ease 0.2s both;
-  opacity: 0.9;
-}
 
 @keyframes slideInUp {
   from {
@@ -831,15 +802,7 @@ body {
   }
 }
 
-.secondary-profile-badge {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: 0.5rem 1.25rem;
-  border-radius: var(--radius-full);
-  border: 1px solid;
-  backdrop-filter: blur(10px);
-}
+
 
 .secondary-profile-icon {
   font-size: 1.1rem;
@@ -868,7 +831,6 @@ body {
 .result-name {
   font-size: clamp(3rem, 8vw, 5.5rem);
   font-weight: 400;
-  margin-bottom: var(--space-md);
   line-height: 1.05;
   letter-spacing: -0.03em;
 }
@@ -885,7 +847,7 @@ body {
   font-style: italic;
   color: var(--color-text-secondary);
   font-size: 1.5rem;
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
   font-weight: 300;
   letter-spacing: 0.01em;
   max-width: 600px;
@@ -968,7 +930,6 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: var(--space-lg);
-  margin-bottom: var(--space-2xl);
 }
 
 .scores-panel {
@@ -982,13 +943,11 @@ body {
 
 .scores-panel-label {
   font-family: 'DM Mono', monospace;
-  font-size: 0.6rem;
+  font-size: 0.875rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-text-tertiary);
   margin-bottom: var(--space-xl);
-  display: flex;
-  justify-content: space-between;
   font-weight: 500;
 }
 
@@ -1001,10 +960,18 @@ body {
 
 .score-bar-label {
   font-family: 'DM Mono', monospace;
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  
+  .score-bar-icon {
+    display: flex;
+    margin-bottom: 1px;
+  }
 }
 
 .score-bar-track {
@@ -1025,7 +992,7 @@ body {
 
 .score-bar-val {
   font-family: 'DM Mono', monospace;
-  font-size: 0.8rem;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
@@ -1044,7 +1011,7 @@ body {
 
 .radar-panel-label {
   font-family: 'DM Mono', monospace;
-  font-size: 0.54rem;
+  font-size: 0.675rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--color-text-tertiary);

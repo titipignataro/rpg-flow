@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { FaCrown, FaStarHalfAlt } from "react-icons/fa";
 import './App.css';
 import { TRAIT_META, ARCHETYPES } from './data/archetypes';
 import { QUESTIONS } from './data/questions';
-import {  SECRET_BADGES, BADGES, FLASH, TABS } from './data/constants';
+import { SECRET_BADGES, BADGES, FLASH } from './data/constants';
 import { getCognitiveStyle, getContradictions, getMotivators, getStressProfile, getTeamCompatibility } from "./calcs";
-import RadarChart from "./components/radarchart";
 import { clearSaved, downloadResult, formatDate, loadSaved, parseImport, persistResult } from "./utils";
+import ResultScreen from "./components/resultscreen"; 
+type DiscKey = "D" | "I" | "S" | "C";
 
 
 
@@ -30,11 +30,19 @@ export default function App() {
     if (saved) setSavedResult(saved);
   }, []);
 
-  const getArch = (s = state) => {
-    const keys = ["D","I","S","C"];
-    let best = keys[0];
-    keys.forEach(k => { if (s[k] > s[best]) best = k; });
-    return ARCHETYPES[best];
+
+  const getArchetype = (scores: Record<DiscKey, number> = state) => {
+    const traits: DiscKey[] = ["D", "I", "S", "C"];
+
+    let dominantTrait = traits[0];
+
+    traits.forEach((trait) => {
+      if (scores[trait] > scores[dominantTrait]) {
+        dominantTrait = trait;
+      }
+    });
+
+    return ARCHETYPES[dominantTrait];
   };
 
   const handleViewSaved = () => {
@@ -53,7 +61,7 @@ export default function App() {
   const handleExportSaved = () => { if (savedResult) downloadResult(savedResult); };
 
   const handleExportCurrent = () => {
-    downloadResult({ state, badges, savedAt: savedResult?.savedAt || new Date().toISOString(), archetype: getArch().name });
+    downloadResult({ state, badges, savedAt: savedResult?.savedAt || new Date().toISOString(), archetype: getArchetype().name });
   };
 
   const handleImportClick = () => { setImportError(null); fileInputRef.current?.click(); };
@@ -97,14 +105,14 @@ export default function App() {
     const newB = BADGES.filter(b => !badges.find(e => e.id === b.id) && b.cond(ns, nq, nc));
     const secretB = SECRET_BADGES.filter(b => !badges.find(e => e.id === b.id) && b.condition(ns));
     const allNewBadges = [...newB, ...secretB];
-    
+
     if (allNewBadges.length) {
       setBadges(prev => [...prev, ...allNewBadges]);
       setBadgePopup(allNewBadges[0]);
       setTimeout(() => setBadgePopup(null), 2400);
     }
     if (nq >= QUESTIONS.length) {
-      const resultData = { state: ns, badges: [...badges, ...allNewBadges], savedAt: new Date().toISOString(), archetype: getArch(ns).name };
+      const resultData = { state: ns, badges: [...badges, ...allNewBadges], savedAt: new Date().toISOString(), archetype: getArchetype(ns).name };
       persistResult(resultData); setSavedResult(resultData);
       setTimeout(() => setScreen("result"), 600);
     } else {
@@ -112,27 +120,19 @@ export default function App() {
     }
   };
 
-  const arch = getArch();
+  const arch = getArchetype();
   const q = QUESTIONS[qIdx] || QUESTIONS[0];
   const letters = ["A","B","C","D"];
-  const maxVal = 30;
 
   const sorted = Object.entries(state).sort((a,b) => b[1]-a[1]);
   const secondKey = sorted[1]?.[0];
   const secondArch = secondKey ? ARCHETYPES[secondKey] : null;
 
-  const cognitiveStyle = getCognitiveStyle(state.D, state.I, state.S, state.C);
-  const contradictions = getContradictions(state);
-  const stressProfile = getStressProfile(state);
-  const motivators = getMotivators(state);
-  const teamCompat = getTeamCompatibility(state);
-  const combinedArchetype = arch.name;
-
   const pcts = {
-    D: Math.min((state.D / maxVal) * 100, 100),
-    I: Math.min((state.I / maxVal) * 100, 100),
-    S: Math.min((state.S / maxVal) * 100, 100),
-    C: Math.min((state.C / maxVal) * 100, 100),
+    D: Math.min((state.D / 30) * 100, 100),
+    I: Math.min((state.I / 30) * 100, 100),
+    S: Math.min((state.S / 30) * 100, 100),
+    C: Math.min((state.C / 30) * 100, 100),
   };
 
   return (
@@ -159,9 +159,7 @@ export default function App() {
               <div className="badge-popup-name">{badgePopup.name}</div>
               <div className="badge-popup-desc">{badgePopup.desc}</div>
               {SECRET_BADGES.some(b => b.id === badgePopup.id) && (
-                <div className="secret-badge-label">
-                  ⚡ CONQUISTA SECRETA
-                </div>
+                <div className="secret-badge-label">⚡ CONQUISTA SECRETA</div>
               )}
             </div>
           </>
@@ -291,322 +289,25 @@ export default function App() {
 
         {/* ── RESULT ─────────────────────────────────────────────────────────── */}
         {screen === "result" && (
-          <div className="result-wrap">
-            <div className="result-header">
-              <div className="profile-display">
-                <div className="primary-profile">
-                  <div className="primary-profile-badge" style={{ 
-                    background: `linear-gradient(135deg, ${arch.color}20, ${arch.color}10)`,
-                    borderColor: `${arch.color}40`
-                  }}>
-                    <FaCrown className="primary-profile-icon" style={{ color: arch.color }} />
-                    <span className="primary-profile-label" style={{ color: arch.color }}>Perfil Principal</span>
-                  </div>
-                  <div className="result-name" style={{ 
-                    color: arch.color,
-                    textShadow: `0 0 40px ${arch.color}40, 0 0 80px ${arch.color}20`
-                  }}>{combinedArchetype}</div>
-                </div>
-                
-                {secondArch && secondKey !== arch.id && (
-                  <div className="secondary-profile">
-                    <div className="secondary-profile-badge" style={{ 
-                      background: `linear-gradient(135deg, ${TRAIT_META[secondKey].color}15, ${TRAIT_META[secondKey].color}08)`,
-                      borderColor: `${TRAIT_META[secondKey].color}30`
-                    }}>
-                      <FaStarHalfAlt className="secondary-profile-icon" style={{ color: TRAIT_META[secondKey].color }} />
-                      <span className="secondary-profile-label" style={{ color: TRAIT_META[secondKey].color }}>Influência Secundária</span>
-                    </div>
-                    <div className="subperfil-text" style={{ 
-                      color: TRAIT_META[secondKey].color,
-                      textShadow: `0 0 30px ${TRAIT_META[secondKey].color}30`
-                    }}>
-                      {secondArch.name}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="result-tagline">{arch.tagline}</div>
-              <div className="result-tag-row">
-                <span className="result-tag primary-tag" style={{
-                  color: arch.color,
-                  borderColor: arch.color + "60",
-                  background: arch.color + "15"
-                }}>
-                  {arch.disc} dominante
-                </span>
-                {secondArch && secondKey !== arch.id && (
-                  <span className="result-tag secondary-tag" style={{
-                    color: TRAIT_META[secondKey].color,
-                    borderColor: TRAIT_META[secondKey].color + "50",
-                    background: TRAIT_META[secondKey].color + "12"
-                  }}>
-                    {TRAIT_META[secondKey].label} secundária
-                  </span>
-                )}
-                <span className="result-tag" style={{
-                  color: "#a78bfa",
-                  borderColor: "#a78bfa60",
-                  background: "#a78bfa15"
-                }}>
-                  {cognitiveStyle.name}
-                </span>
-              </div>
-
-              <div className="scores-radar-grid">
-                <div className="scores-panel">
-                  <div className="scores-panel-label">
-                    Dimensões de Comportamento
-                    <span>Intensidade 0–30</span>
-                  </div>
-                  {Object.entries(TRAIT_META).map(([k, m]) => (
-                    <div key={k} className="score-bar-row">
-                      <div className="score-bar-header">
-                        <span className="score-bar-label" style={{ color: m.color }}>
-                          {m.label}
-                        </span>
-                        <span className="score-bar-val" style={{ color: m.color }}>{state[k]}.0</span>
-                      </div>
-                      <div className="score-bar-track">
-                        <div className="score-bar-fill" style={{
-                          width: `${Math.min((state[k] / maxVal) * 100, 100)}%`,
-                          background: `linear-gradient(90deg, ${m.color}99, ${m.color})`
-                        }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="radar-panel">
-                  <RadarChart state={state} />
-                  <div className="radar-panel-label">Mapeamento de Competências Estruturais</div>
-                </div>
-              </div>
-            </div>
-
-            {/* TABS */}
-            <div className="tabs-row">
-              {TABS.map(t => (
-                <button key={t.id} className={`tab-btn ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="tab-content">
-
-              {/* PERFIL */}
-              {tab === "perfil" && (
-                <>
-                  <div className="insight-block" style={{ borderLeftColor: arch.color }}>
-                    <h3>Visão geral</h3>
-                    <p>{arch.overview}</p>
-                  </div>
-                  
-                  {contradictions.map((contradiction, idx) => (
-                    <div key={idx} className="contradiction-card">
-                      <h3>⚖️ {contradiction.title}</h3>
-                      <p>{contradiction.description}</p>
-                    </div>
-                  ))}
-
-                  <div className="insight-block" style={{ borderLeftColor: arch.color }}>
-                    <h3>Como você aparece para o mundo</h3>
-                    <p>{arch.publicVsPrivate}</p>
-                  </div>
-
-                  {secondArch && secondKey !== arch.id && (
-                    <div className="secondary-trait-section">
-                      <div className="section-label">Traço secundário — {secondArch.name}</div>
-                      <div className="trait-card">
-                        <h4 style={{ color: TRAIT_META[secondKey].color }}>{TRAIT_META[secondKey].label}</h4>
-                        <p>Seu segundo traço mais forte adiciona uma camada ao seu perfil principal. Você tende a combinar a {arch.disc.toLowerCase()} do {arch.name} com a {TRAIT_META[secondKey].label.toLowerCase()} do {secondArch.name} — criando uma combinação que raramente é descrita por um único perfil.</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {badges.length > 0 && (
-                    <div className="badges-section">
-                      <div className="section-label">Conquistas</div>
-                      <div className="badges-row">
-                        {badges.map(b => (
-                          <div key={b.id} className={`badge-chip ${SECRET_BADGES.some(sb => sb.id === b.id) ? 'secret-badge' : ''}`}>
-                            {b.icon} {b.name}
-                            {SECRET_BADGES.some(sb => sb.id === b.id) && <span className="secret-badge-icon">⚡</span>}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* ESTILO COGNITIVO */}
-              {tab === "cognitivo" && (
-                <>
-                  <div className="cognitive-card">
-                    <h3>🧠 Seu estilo cognitivo</h3>
-                    <p className="cognitive-name">{cognitiveStyle.name}</p>
-                    <div className="cognitive-traits">
-                      {cognitiveStyle.traits.map((trait, idx) => (
-                        <span key={idx} className="cognitive-trait">{trait}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="insight-block" style={{ borderLeftColor: "#8b7fe8" }}>
-                    <h3>Como você processa informação</h3>
-                    <p>Seu estilo cognitivo reflete como você naturalmente organiza pensamentos, toma decisões e interage com informações complexas. Isso não é fixo - é um padrão que você desenvolveu e que pode ser expandido com consciência.</p>
-                  </div>
-                </>
-              )}
-
-              {/* MOTIVAÇÃO */}
-              {tab === "motivacao" && (
-                <>
-                  <div className="motivator-grid">
-                    <div className="motivator-section">
-                      <h4 style={{ color: "#3cb87a" }}>✨ O QUE TE ENERGIZA</h4>
-                      <div className="motivator-list">
-                        {motivators.primary.energizes.map((item, idx) => (
-                          <span key={idx} className="motivator-item energize">✓ {item}</span>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div className="motivator-section">
-                      <h4 style={{ color: "#e05c5c" }}>⚠️ O QUE TE DRENA</h4>
-                      <div className="motivator-list">
-                        {motivators.primary.drains.map((item, idx) => (
-                          <span key={idx} className="motivator-item drain">✗ {item}</span>
-                        ))}
-                      </div>
-                    </div>
-
-                    {motivators.secondaryTrait !== motivators.primaryTrait && (
-                      <div className="motivator-section secondary">
-                        <h4 style={{ color: TRAIT_META[motivators.secondaryTrait].color }}>
-                          + Influência secundária ({TRAIT_META[motivators.secondaryTrait].label})
-                        </h4>
-                        <div className="motivator-list">
-                          {motivators.secondary.energizes.slice(0, 2).map((item, idx) => (
-                            <span key={idx} className="motivator-item">✓ {item}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="insight-block growth">
-                    <h3>A chave para sua energia sustentável</h3>
-                    <p>Ambientes que respeitam seus energizadores e minimizam seus drenadores não são apenas mais confortáveis - são onde você produz seu melhor trabalho sem sacrificar sua saúde mental.</p>
-                  </div>
-                </>
-              )}
-
-              {/* RELAÇÕES */}
-              {tab === "relacoes" && (
-                <>
-                  <div className="section-label">Compatibilidade natural</div>
-                  {teamCompat.map((comp, idx) => (
-                    <div key={idx} className="compat-item">
-                      <span className="compat-dot" style={{ background: TRAIT_META[comp.trait].color }} />
-                      <div className="compat-reason">
-                        <strong style={{ color: TRAIT_META[comp.trait].color }}>{TRAIT_META[comp.trait].label}</strong> — {comp.reason}
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="section-label">Tensões naturais</div>
-                  {arch.tension_with.map(w => (
-                    <div key={w.id} className="compat-item tension">
-                      <span className="compat-dot" style={{ background: "#444" }} />
-                      <div className="compat-reason">
-                        <strong style={{ color: "#7a7870" }}>{ARCHETYPES[w.id].name}</strong> — {w.reason}
-                      </div>
-                    </div>
-                  ))}
-
-                  <div className="insight-block" style={{ borderLeftColor: "#d4a843" }}>
-                    <h3>Como você se conecta</h3>
-                    <p>Relações para você não são apenas redes - são ecossistemas. Você se conecta melhor quando entende o papel que cada pessoa joga naturalmente, e quando se sente compreendido no seu próprio papel.</p>
-                  </div>
-                </>
-              )}
-
-              {/* SOB PRESSÃO */}
-              {tab === "pressao" && (
-                <>
-                  <div className="stress-card">
-                    <h3>📉 Sob pressão extrema</h3>
-                    <p className="stress-behavior">
-                      <strong style={{ color: "#e05c5c" }}>{stressProfile.behavior}</strong>
-                    </p>
-                    <p className="stress-description">
-                      {stressProfile.description}
-                    </p>
-                    <div className="warning-quote">
-                      🧠 Pergunta para refletir: {stressProfile.warning}
-                    </div>
-                  </div>
-
-                  <div className="insight-block warn">
-                    <h3>O que muda quando a pressão aumenta</h3>
-                    <p>{arch.underPressure}</p>
-                  </div>
-
-                  <div className="blindspot-section">
-                    <div className="section-label">Ponto cego principal</div>
-                    <div className="insight-block" style={{ borderLeftColor: "#e05c5c" }}>
-                      <h3>O que você tende a não ver</h3>
-                      <p>{arch.blindspot}</p>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* CRESCIMENTO */}
-              {tab === "crescimento" && (
-                <>
-                  <div className="insight-block growth">
-                    <h3>Sua maior alavanca</h3>
-                    <p>{arch.growth}</p>
-                  </div>
-
-                  <div className="insight-block" style={{ borderLeftColor: "#a78bfa" }}>
-                    <h3>Como receber feedback de você</h3>
-                    <p>{arch.feedbackTip}</p>
-                  </div>
-
-                  <div className="questions-section">
-                    <div className="section-label">Perguntas para levar</div>
-                    {arch.questions.map((q, i) => (
-                      <div key={i} className="q-card"><p>{q}</p></div>
-                    ))}
-                  </div>
-
-                  {contradictions.length > 0 && (
-                    <div className="insight-block" style={{ borderLeftColor: "#8b7fe8" }}>
-                      <h3>Trabalhando com suas contradições</h3>
-                      <p>Suas contradições internas não são defeitos - são indicadores de maturidade psicológica. Pessoas integradas não são pessoas sem conflitos internos, são pessoas que aprenderam a dançar com eles.</p>
-                    </div>
-                  )}
-                </>
-              )}
-
-            </div>
-
-            <div className="result-actions">
-              <div className="save-notice"><span className="save-dot" />Resultado salvo automaticamente</div>
-              <button type="button" className="btn-secondary btn-full" onClick={handleExportCurrent}>
-                Exportar resultado (.json)
-              </button>
-              <div className="btn-row">
-                <button className="btn-secondary" onClick={() => setScreen("intro")}>← Voltar ao início</button>
-                <button className="btn-secondary" onClick={startGame}>Refazer do zero</button>
-              </div>
-            </div>
-          </div>
+          <ResultScreen
+            state={state}
+            badges={badges}
+            arch={arch}
+            secondArch={secondArch}
+            secondKey={secondKey}
+            combinedArchetype={arch.name}
+            cognitiveStyle={getCognitiveStyle(state.D, state.I, state.S, state.C)}
+            contradictions={getContradictions(state)}
+            stressProfile={getStressProfile(state)}
+            motivators={getMotivators(state)}
+            teamCompat={getTeamCompatibility(state)}
+            tab={tab}
+            setTab={setTab}
+            savedResult={savedResult}
+            onExportCurrent={handleExportCurrent}
+            onGoHome={() => setScreen("intro")}
+            onRestart={startGame}
+          />
         )}
 
       </div>

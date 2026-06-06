@@ -1,8 +1,12 @@
+import { HiOutlineBolt } from "react-icons/hi2";
+import { IoChatboxOutline, IoShieldOutline } from "react-icons/io5";
+import { PiBrainLight } from "react-icons/pi";
+
 export const TRAIT_META = {
-  D: { label: "Dominância",   color: "#e05c5c" },
-  I: { label: "Influência",   color: "#d4a843" },
-  S: { label: "Estabilidade", color: "#3cb87a" },
-  C: { label: "Consciência",  color: "#8b7fe8" },
+  D: { label: "Dominância",   color: "#e05c5c", icon: HiOutlineBolt  },
+  I: { label: "Influência",   color: "#d4a843", icon: IoChatboxOutline  },
+  S: { label: "Estabilidade", color: "#3cb87a", icon: IoShieldOutline },
+  C: { label: "Consciência",  color: "#8b7fe8", icon: PiBrainLight },
 };
 
 export const ARCHETYPES = {
